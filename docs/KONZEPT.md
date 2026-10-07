@@ -161,3 +161,17 @@ Ob der „HCLEO“-Controller dazugehört, wissen wir **nicht** – erst messen.
 4. [ ] Protokoll in `LampConfig` übernehmen
 5. [ ] MVP umsetzen und auf dem Handy testen
 6. [ ] Schnelleinstellungs-Kachel
+
+## 8. Quellen & UI-Inspiration
+
+| Quelle | Wofür |
+|---|---|
+| [awesome-android-ui](https://github.com/wasabeef/awesome-android-ui) | Sammlung von Android-UI-Bibliotheken, als Ideenquelle für Schalter, Buttons und Animationen |
+
+Hinweis: Die meisten Einträge dort sind ältere View-Bibliotheken (XML-Layouts),
+nicht Jetpack Compose. Wir nutzen die Liste deshalb **nur als Inspiration** und
+bauen das Gewünschte mit Compose/Material 3 selbst nach. Direkt für Compose
+interessant ist der Abschnitt *Jetpack Compose*, z. B.
+[ComposeCookBook](https://github.com/Gurupreet/ComposeCookBook) und
+[neumorphic-compose](https://github.com/CuriousNikhil/neumorphic-compose)
+(ggf. für einen auffälligen AN/AUS-Schalter).
