@@ -1,0 +1,283 @@
+<title>Lichtschalter Prototyp</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: Kopf + Zustands-Simulator, darunter zwei Handy-Mockups nebeneinander (mobil untereinander) mit Kurzbewertung */
+:root {
+  --bg: #f3f2f0; --fg: #1d1b1a; --muted: #6b6461; --line: #dcd8d4; --panel: #ffffff;
+  --red: #e0252b; --red-soft: #fde4e4;
+  --f-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --f-body: "IBM Plex Sans", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, monospace;
+  /* Handy-Inneres: bewusst feste Welten je Design, unabhängig vom Seitenthema */
+  --a-bg: #121011; --a-surface: #1d1a1b; --a-fg: #f1ecea; --a-muted: #8d8482; --a-line: #2e2a2a;
+  --b-bg: #f6f4f2; --b-surface: #ffffff; --b-fg: #221f1e; --b-muted: #7a7270; --b-line: #e4dfdc; --b-plate: #fbfaf9;
+  --ok: #2f9e5b; --warn: #c98a12;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #171516; --fg: #ece8e6; --muted: #9c9492; --line: #34302f; --panel: #211e1f; --red: #ff4a4f; --red-soft: #3a1c1e; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #171516; --fg: #ece8e6; --muted: #9c9492; --line: #34302f; --panel: #211e1f; --red: #ff4a4f; --red-soft: #3a1c1e; color-scheme: dark }
+
+body { background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 15px; line-height: 1.5; }
+.wrap { max-width: 1040px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 56px; display: grid; gap: 28px; }
+header h1 { font-family: var(--f-display); font-weight: 700; font-size: 2.4rem; letter-spacing: .01em; line-height: 1.05; margin: 0; text-wrap: balance; }
+header h1 span { color: var(--red); }
+header p { margin: 6px 0 0; color: var(--muted); max-width: 62ch; }
+
+.sim { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+.sim-label { font-family: var(--f-mono); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.seg { display: flex; flex-wrap: wrap; gap: 6px; }
+.seg button { font: 500 13px var(--f-body); color: var(--fg); background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.seg button:focus-visible, button:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
+
+.designs { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 32px; }
+.design { display: grid; gap: 16px; justify-items: center; align-content: start; min-width: 0; }
+.design-head { width: 100%; max-width: 340px; }
+.design-head .tag { font-family: var(--f-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--red); }
+.design-head h2 { font-family: var(--f-display); font-weight: 600; font-size: 1.7rem; margin: 0; line-height: 1.1; }
+.notes { width: 100%; max-width: 340px; display: grid; gap: 4px; font-size: 14px; margin: 0; padding: 0; list-style: none; }
+.notes li { display: grid; grid-template-columns: 18px 1fr; gap: 6px; }
+.notes li::before { content: "+"; font-family: var(--f-mono); color: var(--ok); font-weight: 500; }
+.notes li.minus::before { content: "–"; color: var(--muted); }
+
+/* Handy-Rahmen */
+.phone { width: 320px; max-width: 100%; aspect-ratio: 9 / 18.5; border-radius: 38px; padding: 10px; background: #0c0b0b; box-shadow: 0 1px 0 #3a3636 inset, 0 18px 40px -18px rgba(0,0,0,.45); }
+.screen { position: relative; height: 100%; border-radius: 29px; overflow: hidden; display: flex; flex-direction: column; }
+.statusbar { display: flex; justify-content: space-between; padding: 10px 22px 0; font: 500 12px var(--f-body); }
+
+/* ---------- Design A: Tally ---------- */
+.a { background: var(--a-bg); color: var(--a-fg); }
+.a .top { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px 0; }
+.a .lamp { display: grid; }
+.a .lamp b { font: 600 15px var(--f-body); }
+.a .lamp small { font: 400 11px var(--f-mono); color: var(--a-muted); }
+.chip { display: inline-flex; align-items: center; gap: 6px; font: 500 11px var(--f-mono); padding: 4px 9px; border-radius: 999px; border: 1px solid currentColor; }
+.chip i { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.chip.ok { color: var(--ok); } .chip.busy { color: var(--warn); } .chip.busy i { animation: blink 1s infinite; } .chip.err { color: var(--red); } .chip.unk { color: var(--a-muted); }
+@keyframes blink { 50% { opacity: .2; } }
+
+.a .sign { margin: 26px 20px 0; border: 3px solid #050505; background: #0a0909; border-radius: 6px; padding: 14px 0; text-align: center; box-shadow: 0 0 0 1px var(--a-line); transition: box-shadow .35s; }
+.a .sign span { font: 700 34px/1 var(--f-display); letter-spacing: .12em; color: #3a1617; transition: color .35s, text-shadow .35s; }
+.a.on .sign span { color: #ff3b3f; text-shadow: 0 0 6px #ff2a2f, 0 0 22px rgba(255,40,46,.7); }
+.a.on .sign { box-shadow: 0 0 0 1px var(--a-line), 0 0 40px -6px rgba(255,40,46,.55); }
+
+.a .center { flex: 1; display: grid; place-items: center; align-content: center; gap: 18px; }
+.tally { width: 168px; height: 168px; border-radius: 50%; border: 0; cursor: pointer; position: relative; background: radial-gradient(circle at 50% 38%, #2b2627, #171415 70%); box-shadow: 0 0 0 8px #1b1819, 0 0 0 9px var(--a-line), inset 0 2px 0 #3a3434, 0 14px 30px -10px #000; display: grid; place-items: center; transition: transform .08s, background .3s, box-shadow .3s; }
+.tally:active { transform: scale(.97); }
+.tally .ico { width: 54px; height: 54px; color: var(--a-muted); transition: color .3s; }
+.a.on .tally { background: radial-gradient(circle at 50% 38%, #ff5357, #c4161c 72%); box-shadow: 0 0 0 8px #3a1415, 0 0 0 9px #5b1d1f, inset 0 2px 0 #ff8c8f, 0 0 50px -4px rgba(255,40,46,.6); }
+.a.on .tally .ico { color: #fff; }
+.tally[disabled] { cursor: default; opacity: .45; }
+.a .state { font: 700 22px var(--f-display); letter-spacing: .14em; text-transform: uppercase; }
+.a .hint { font-size: 12px; color: var(--a-muted); text-align: center; max-width: 230px; min-height: 36px; }
+.a .split { display: flex; gap: 10px; }
+.a .split button { font: 600 16px var(--f-display); letter-spacing: .1em; padding: 12px 22px; border-radius: 12px; border: 1px solid var(--a-line); background: var(--a-surface); color: var(--a-fg); cursor: pointer; }
+.a .split button.red { background: #c4161c; border-color: #c4161c; color: #fff; }
+.a .foot { display: flex; justify-content: space-around; padding: 12px 20px 22px; border-top: 1px solid var(--a-line); font: 400 11px var(--f-mono); color: var(--a-muted); }
+.a .foot b { color: var(--a-fg); font-weight: 500; }
+
+/* ---------- Design B: Schalterplatte ---------- */
+.b { background: var(--b-bg); color: var(--b-fg); }
+.b .appbar { padding: 16px 20px 4px; display: flex; justify-content: space-between; align-items: center; }
+.b .appbar h3 { margin: 0; font: 600 20px var(--f-body); }
+.b .gear { width: 22px; height: 22px; color: var(--b-muted); }
+.b .card { margin: 10px 16px 0; background: var(--b-surface); border: 1px solid var(--b-line); border-radius: 16px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; }
+.b .mini { width: 64px; height: 22px; border-radius: 3px; background: #111; display: grid; place-items: center; font: 700 9px var(--f-display); letter-spacing: .12em; color: #4a1a1b; transition: color .3s, text-shadow .3s; flex: none; }
+.b.on .mini { color: #ff3b3f; text-shadow: 0 0 5px rgba(255,40,46,.8); }
+.b .card div { display: grid; min-width: 0; flex: 1; }
+.b .card b { font: 600 14px var(--f-body); }
+.b .card small { font: 400 11px var(--f-mono); color: var(--b-muted); }
+.b .chip.unk { color: var(--b-muted); }
+
+.b .center { flex: 1; display: grid; place-items: center; align-content: center; gap: 14px; }
+.plate { width: 168px; height: 212px; border-radius: 18px; background: var(--b-plate); border: 1px solid var(--b-line); box-shadow: 0 10px 24px -14px rgba(60,40,40,.45), inset 0 1px 0 #fff; display: grid; place-items: center; }
+.rocker { width: 104px; height: 150px; border-radius: 10px; border: 1px solid #d8d2cf; cursor: pointer; position: relative; overflow: hidden; padding: 0; background: linear-gradient(#ffffff, #efebe9); box-shadow: 0 2px 0 #d3ccc9; transition: background .25s; }
+.rocker .half { position: absolute; left: 0; right: 0; height: 50%; display: grid; place-items: center; font: 700 15px var(--f-display); letter-spacing: .14em; color: var(--b-muted); transition: background .25s, color .25s; }
+.rocker .up { top: 0; } .rocker .down { bottom: 0; }
+/* gedrückte Hälfte wirkt eingedrückt */
+.b.on .rocker .up { background: linear-gradient(#e9e3e0, #f6f2f0); color: var(--red); }
+.b.on .rocker .up::after { content: ""; position: absolute; bottom: 10px; width: 8px; height: 8px; border-radius: 50%; background: #ff3b3f; box-shadow: 0 0 8px #ff3b3f; }
+.b:not(.on) .rocker .down { background: linear-gradient(#f6f2f0, #e9e3e0); color: var(--b-fg); }
+.b.unknown .rocker .half { background: transparent; color: var(--b-muted); }
+.rocker[disabled] { cursor: default; opacity: .5; }
+.b .state { font: 500 14px var(--f-body); color: var(--b-muted); text-align: center; min-height: 42px; max-width: 240px; }
+.b .state strong { color: var(--b-fg); }
+.b .retry { font: 600 13px var(--f-body); padding: 8px 16px; border-radius: 999px; border: 0; background: var(--b-fg); color: var(--b-surface); cursor: pointer; }
+.b .qs { margin: 0 16px 22px; display: grid; gap: 6px; }
+.b .qs small { font: 400 11px var(--f-mono); color: var(--b-muted); text-transform: uppercase; letter-spacing: .08em; }
+.tile { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 20px; background: #e8e3e1; color: var(--b-fg); border: 0; cursor: pointer; font: 500 13px var(--f-body); text-align: left; transition: background .25s, color .25s; }
+.tile svg { width: 18px; height: 18px; flex: none; }
+.b.on .tile { background: #c4161c; color: #fff; }
+.tile span { display: grid; } .tile em { font-style: normal; font-size: 11px; opacity: .8; }
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Lichtschalter für das <span>RECORDING</span>-Schild</h1>
+    <p>Klickbarer Prototyp mit zwei Designs zur Auswahl. Tippe auf den Schalter, um das Schild ein- und auszuschalten. Oben kannst du die Verbindungszustände aus dem Konzept durchspielen.</p>
+  </header>
+
+  <div class="sim" role="group" aria-label="Zustand simulieren">
+    <span class="sim-label">Zustand simulieren</span>
+    <div class="seg" id="sim">
+      <button type="button" id="s-ok" data-s="ok" aria-pressed="true">Verbunden</button>
+      <button type="button" id="s-busy" data-s="busy" aria-pressed="false">Verbinde …</button>
+      <button type="button" id="s-unk" data-s="unk" aria-pressed="false">Zustand unbekannt</button>
+      <button type="button" id="s-err" data-s="err" aria-pressed="false">Nicht erreichbar</button>
+    </div>
+  </div>
+
+  <section class="designs">
+    <!-- Design A -->
+    <article class="design">
+      <div class="design-head"><span class="tag">Design A</span><h2>Tally – Studio-Knopf</h2></div>
+      <div class="phone"><div class="screen a" id="A">
+        <div class="statusbar"><span>21:04</span><span>▮▮▮ 82 %</span></div>
+        <div class="top">
+          <div class="lamp"><b>RECORDING-Schild</b><small>HCLEO · BE:27:4F:91:0C:3A</small></div>
+          <span class="chip ok" data-chip><i></i><span>verbunden</span></span>
+        </div>
+        <div class="sign" aria-hidden="true"><span>RECORDING</span></div>
+        <div class="center">
+          <button class="tally" type="button" id="a-btn" aria-pressed="false" aria-label="Schild schalten">
+            <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 3v8"/><path d="M6.3 6.8a8 8 0 1 0 11.4 0"/></svg>
+          </button>
+          <div class="split" id="a-split" hidden>
+            <button type="button" id="a-on" class="red">AN</button>
+            <button type="button" id="a-off">AUS</button>
+          </div>
+          <div class="state" id="a-state">Aus</div>
+          <div class="hint" id="a-hint">Tippen zum Einschalten</div>
+        </div>
+        <div class="foot"><span><b>Schalter</b></span><span>Lampe wechseln</span><span>Hilfe</span></div>
+      </div></div>
+      <ul class="notes">
+        <li>Ein großer runder Knopf, mit dem Daumen blind treffbar</li>
+        <li>Das Schild leuchtet in der App mit, Zustand sofort klar</li>
+        <li>Dunkel, passt ins abgedunkelte Studio</li>
+        <li class="minus">Eigene Optik, weniger „Android-typisch“</li>
+      </ul>
+    </article>
+
+    <!-- Design B -->
+    <article class="design">
+      <div class="design-head"><span class="tag">Design B</span><h2>Schalterplatte – Material 3</h2></div>
+      <div class="phone"><div class="screen b" id="B">
+        <div class="statusbar"><span>21:04</span><span>▮▮▮ 82 %</span></div>
+        <div class="appbar"><h3>Lichtschalter</h3>
+          <svg class="gear" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+        </div>
+        <div class="card">
+          <span class="mini" aria-hidden="true">RECORDING</span>
+          <div><b>RECORDING-Schild</b><small>HCLEO · gemerkt</small></div>
+          <span class="chip ok" data-chip><i></i><span>verbunden</span></span>
+        </div>
+        <div class="center">
+          <div class="plate">
+            <button class="rocker" type="button" id="b-btn" aria-pressed="false" aria-label="Schild schalten">
+              <span class="half up" data-half="on">AN</span><span class="half down" data-half="off">AUS</span>
+            </button>
+          </div>
+          <div class="state" id="b-state">Schild ist <strong>aus</strong></div>
+          <button class="retry" type="button" id="b-retry" hidden>Erneut verbinden</button>
+        </div>
+        <div class="qs">
+          <small>Vorschau Schnelleinstellungs-Kachel</small>
+          <button class="tile" type="button" id="b-tile">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg>
+            <span>RECORDING<em id="b-tile-sub">Aus</em></span>
+          </button>
+        </div>
+      </div></div>
+      <ul class="notes">
+        <li>Sieht aus wie ein echter Wandschalter, sofort verständlich</li>
+        <li>Nah an Material 3, fühlt sich wie Android an</li>
+        <li>Zeigt gleich die geplante Schnelleinstellungs-Kachel</li>
+        <li class="minus">Schalter kleiner, Leuchten des Schilds nur angedeutet</li>
+      </ul>
+    </article>
+  </section>
+</div>
+
+<script>
+(function () {
+  var scenario = "ok";
+  var st = { A: false, B: false };
+  var chipText = { ok: "verbunden", busy: "verbinde …", unk: "verbunden", err: "nicht erreichbar" };
+
+  function setChips(root) {
+    root.querySelectorAll("[data-chip]").forEach(function (c) {
+      c.className = "chip " + (scenario === "unk" ? "ok" : scenario);
+      c.querySelector("span").textContent = chipText[scenario];
+    });
+  }
+
+  function renderA() {
+    var root = document.getElementById("A"), on = st.A;
+    var btn = document.getElementById("a-btn"), split = document.getElementById("a-split");
+    var state = document.getElementById("a-state"), hint = document.getElementById("a-hint");
+    setChips(root);
+    var unk = scenario === "unk";
+    root.classList.toggle("on", on && scenario !== "err" && !unk);
+    btn.hidden = unk; split.hidden = !unk;
+    btn.disabled = scenario === "busy" || scenario === "err";
+    btn.setAttribute("aria-pressed", String(on));
+    if (scenario === "ok") { state.textContent = on ? "An – On Air" : "Aus"; hint.textContent = on ? "Tippen zum Ausschalten" : "Tippen zum Einschalten"; }
+    if (scenario === "busy") { state.textContent = "Verbinde …"; hint.textContent = "Suche HCLEO in der Nähe"; }
+    if (scenario === "unk") { state.textContent = "Zustand ?"; hint.textContent = "Die Lampe meldet ihren Zustand nicht. Wähle direkt AN oder AUS."; }
+    if (scenario === "err") { state.textContent = "Nicht erreichbar"; hint.textContent = "Hat das Schild Strom? Läuft die Hersteller-App? Tippe auf „Lampe wechseln“."; }
+  }
+
+  function renderB() {
+    var root = document.getElementById("B"), on = st.B;
+    var btn = document.getElementById("b-btn"), state = document.getElementById("b-state");
+    var retry = document.getElementById("b-retry"), sub = document.getElementById("b-tile-sub");
+    setChips(root);
+    var unk = scenario === "unk", live = scenario === "ok" || unk;
+    root.classList.toggle("on", on && scenario === "ok");
+    root.classList.toggle("unknown", !live || unk);
+    btn.disabled = !live;
+    retry.hidden = scenario !== "err";
+    btn.setAttribute("aria-pressed", String(on));
+    if (scenario === "ok") state.innerHTML = "Schild ist <strong>" + (on ? "an" : "aus") + "</strong>";
+    if (scenario === "busy") state.textContent = "Verbinde mit dem Schild …";
+    if (scenario === "unk") state.innerHTML = "Zustand <strong>unbekannt</strong>. Oben drücken für AN, unten für AUS.";
+    if (scenario === "err") state.textContent = "Schild nicht erreichbar. Steckt der Controller am Strom?";
+    sub.textContent = scenario === "ok" ? (on ? "An" : "Aus") : scenario === "err" ? "Nicht erreichbar" : scenario === "busy" ? "Verbinde …" : "Unbekannt";
+  }
+
+  function render() { renderA(); renderB(); }
+
+  document.getElementById("a-btn").addEventListener("click", function () { st.A = !st.A; render(); });
+  document.getElementById("a-on").addEventListener("click", function () { st.A = true; setScenario("ok"); });
+  document.getElementById("a-off").addEventListener("click", function () { st.A = false; setScenario("ok"); });
+
+  document.getElementById("b-btn").addEventListener("click", function (e) {
+    if (scenario === "unk") {
+      var r = this.getBoundingClientRect();
+      st.B = e.clientY < r.top + r.height / 2;
+      setScenario("ok"); return;
+    }
+    st.B = !st.B; render();
+  });
+  document.getElementById("b-tile").addEventListener("click", function () { if (scenario === "ok") { st.B = !st.B; render(); } });
+  document.getElementById("b-retry").addEventListener("click", function () {
+    setScenario("busy");
+    setTimeout(function () { setScenario("ok"); }, 1200);
+  });
+
+  function setScenario(s) {
+    scenario = s;
+    document.querySelectorAll("#sim button").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.s === s)); });
+    render();
+  }
+  document.querySelectorAll("#sim button").forEach(function (b) { b.addEventListener("click", function () { setScenario(b.dataset.s); }); });
+
+  render();
+})();
+</script>
